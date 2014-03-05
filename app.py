@@ -47,6 +47,45 @@ def call():
     # Return a message indicating the call is coming
     return 'Call inbound!'
 
+@app.route('/sms', methods=['GET', 'POST'])
+def sms():
+    response = twiml.Response();
+    response.message('hi! thanks for texting in!')
+    return Response(str(response))
+
+@app.route('/call', methods=['GET', 'POST'])
+def inbound_call():
+    response = twiml.Response();
+    response.say('I just responded to a phone call. Huzzah!', voice='woman')
+    # Gather digits.
+    with response.gather(numDigits=1, action="/handle-key", method="POST") as g:
+        g.say('Press 1 for more options, or press 0 to speak to Jona.')
+ 
+    return str(response)
+
+@app.route("/handle-key", methods=['GET', 'POST'])
+def handle_key():
+    # Handle key press from a user. 
+    digit_pressed = request.values.get('Digits', None)
+    if digit_pressed == "1":
+        response = twiml.Response()
+        response.say("Good job you pressed one. You are smart and beautiful.", voice='man')
+ 
+        return str(response)
+    
+    # If the caller presses 0, it calls Jona
+    elif digit_pressed == "0":
+        response = twiml.Response()
+        response.dial("+12102500227")
+        # If call fails
+        response.say("Sorry, Jona is not available. Goodbye.")
+
+        return str(response)
+
+    # If the caller pressed anything but 1 or 0, redirect them to the main menu.
+    else:
+        return redirect("/call")
+
 # Generate TwiML instructions for an outbound call
 @app.route('/hello')
 def hello():
